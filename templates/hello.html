@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Remember To Love
+{% endblock %}
+
+{% block main %}
+    <h1>Welcome, {{name}}!!!</h1>
+    <p class="remember">Remember To Remember</p>
+    <p class="love_people">The People You Love</p>
+    <hr>
+    <h1>My People</h1>
+    <hr>
+
+    <div class="message-list">
+        {% for contact in contacts %}
+            <a href="/ppl/{{contact.id}}" >
+                <div class="checkppl">
+                    <strong>{{contact.name}}</strong>
+                </div>
+            </a>
+        {% endfor %}
+    </div>
+{% endblock %}

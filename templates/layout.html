@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Remember to Love{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header>
+        <!-- Centered Main Title Line -->
+        <div class="logo-group">
+            <h1>Remember to Love</h1>
+            <span class="sub-logo">RTL</span>
+        </div>
+
+        <!-- Action Row Below Title -->
+        <div class="nav-container">
+            {% if session["user_id"] %}
+            <div class="addppl_icon">
+                <span>Add People</span>
+                <a href="/addppl" class="circle-button-text">+</a>       
+            </div>
+            {% endif %}
+
+            <button id="hamburger" class="hamburger">☰</button>
+        </div>
+
+        <!-- Sliding Menu -->
+        <nav id="burger">
+            <a class="burger-item" href="/">Home</a>  
+            <a class="burger-item" href="/login">Login</a>
+            <a class="burger-item" href="/register">Register</a> 
+            <a class="burger-item" href="/logout">Log out</a> 
+        </nav>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block main %}
+
+        {% endblock %}
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Remember To Love</p>
+    </footer>
+
+    <script>
+        const hamburger = document.getElementById("hamburger");
+        const burger = document.getElementById("burger");
+
+        hamburger.addEventListener("click", function(e) {
+            e.stopPropagation();
+            burger.classList.toggle("show");
+        });
+    </script>
+
+</body>
+</html>

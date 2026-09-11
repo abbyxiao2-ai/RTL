@@ -1,0 +1,123 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    My People
+{% endblock %}
+
+{% block main %}
+    <h2 class="person_name">{{ person.name }}</h2>
+
+    <div class="info-container" style="max-width: 500px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;">
+        
+        {% if person.pronunciation %}
+            <div class="info-box">
+                <span class="info-label">Pronunciation:</span> {{ person.pronunciation }}
+            </div>
+        {% endif %}
+
+        {% if person.audio_path %}
+            <div class="info-box">
+                <span class="info-label">Pronunciation:</span>
+                <audio controls src="{{ url_for('static', filename='uploads/' + person.audio_path) }}"></audio>
+            </div>
+        {% endif %}
+
+        {% if person.phonenumber %}
+            <div class="info-box">
+                <span class="info-label">Phone:</span> {{ person.phonenumber }}
+            </div>
+        {% endif %}
+
+        {% if person.relationship %}
+            <div class="info-box">
+                <span class="info-label">Relationship:</span> {{ person.relationship }}
+            </div>
+        {% endif %}
+
+        {% if person.remark %}
+            <div class="info-box">
+                <span class="info-label">Remark:</span> {{ person.remark }}
+            </div>
+        {% endif %}
+
+        {% if person.birth_year or person.birth_month or person.birth_day %}
+            <div class="info-box">
+                <span class="info-label">Birthday:</span> {{ person.birth_year }}/{{ person.birth_month }}/{{ person.birth_day }}
+            </div>
+        {% endif %}
+
+        {% if person.hobbies %}
+            <div class="info-box">
+                <span class="info-label">Hobbies:</span> {{ person.hobbies }}
+            </div>
+        {% endif %}
+
+        {% if person.personalities %}
+            <div class="info-box">
+                <span class="info-label">Personality/Preferences:</span> {{ person.personalities }}
+            </div>
+        {% endif %}
+
+        {% if person.gifts %}
+            <div class="info-box">
+                <span class="info-label">Gifts:</span> {{ person.gifts }}
+            </div>
+        {% endif %}
+
+{% if person.images %}
+    <div class="gallery-grid">
+        {% for img in person.images.split(',') %}
+            {% if img and img.strip() %}
+                <div class="photo-card">
+                    <img src="{{ url_for('static', filename='uploads/' + img.strip()) }}" 
+                         alt="Photo" 
+                         class="photo-img"
+                         onclick="openpic(this.src)">   
+
+                    <form action="/delete-photo/{{ person.id }}" method="post" class="photo-delete-form">
+                        <input type="hidden" name="filename" value="{{ img.strip() }}">
+                        <button type="submit" 
+                                class="badge-delete-btn"
+                                onclick="event.stopPropagation(); return confirm('Delete photo?');"
+                                title="Delete">
+                            <svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                                <line x1="1" y1="1" x2="11" y2="11"></line>
+                                <line x1="11" y1="1" x2="1" y2="11"></line>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+    <div style="margin-top: 25px; display: flex; gap: 10px; justify-content: center;">
+        <a href="/" class="btn btn-secondary">Back to List</a>
+        <a href="/edit/{{ person.id }}" class="btn btn-primary">Edit Info</a>
+    </div>
+
+    <form action="/delete/{{ person.id }}" method="post" style="margin-top: 15px;">
+        <button type="submit" class="btn-delete" onclick="return confirm('Are you sure you want to delete this contact?');">
+            Delete Person
+        </button>
+    </form>
+
+<div id="picbox" class="lightbox-modal" style="display: none;" onclick="closepic()">  
+    <img id="bigpic" class="lightbox-content">
+</div>
+
+<script>
+    function openpic(imageSrc) {
+        document.getElementById("bigpic").src = imageSrc;
+        document.getElementById("picbox").style.display = "flex";
+    }
+
+    function closepic() {          
+        document.getElementById("picbox").style.display = "none";  
+    }
+</script>
+
+    
+{% endblock %}
+

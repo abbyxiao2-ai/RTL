@@ -1,0 +1,151 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Edit {{ person.name }}
+{% endblock %}
+
+{% block main %}
+    <h2>Edit Info for {{ person.name }}</h2>
+    
+    <form action="/edit/{{ person.id }}" method="post" enctype="multipart/form-data" autocomplete="off">
+        <div class="form-group">
+            <p class="input_hints">What's their name?</p>
+            <input class="form-control" name="name" value="{{ person.name }}" placeholder="Name" type="text" autocomplete="off" required/>
+        </div>
+
+    <div class="audio-wrapper">
+        <button type="button" id="record-btn">Record</button>
+        <span id="recording-dot"></span>
+        <button type="button" id="stop-btn" disabled>Stop</button>
+
+        {% if person.audio_path %}
+            <audio id="preview-player" controls src="{{ url_for('static', filename='uploads/' + person.audio_path) }}"></audio>
+            <button type="submit" 
+                    class="delete_audio"
+                    formaction="/delete_audio/{{ person.id }}"
+                    formmethod="post"
+                    onclick="event.stopPropagation(); return confirm('Delete audio?');">x</button>
+        {% else %}
+            <audio id="preview-player" controls></audio>
+        {% endif %}
+
+        <label for="audio-input" class="custom-file-upload">
+            Upload Audio File
+        </label>
+        <input type="file" name="audio" id="audio-input" accept="audio/*" style="display: none;">
+    </div>
+
+        <div class="form-group">
+            <p class="input_hints">Phonenumber</p>
+            <input class="form-control" name="phonenumber" value="{{ person.phonenumber }}" placeholder="Phonenumber" type="text" autocomplete="off"/>
+        </div>
+        <div class="form-group">
+            <p class="input_hints">How did we meet?</p>
+            <input class="form-control" name="relationship" value="{{ person.relationship }}" placeholder="Relationship" type="text" autocomplete="off"/>
+        </div>
+        <div class="form-group">
+            <p class="input_hints">Things about them</p>
+            <input class="form-control" name="remark" value="{{ person.remark }}" placeholder="Remark" type="text" autocomplete="off"/>
+        </div>
+        
+        <div class="section">
+            <h3>Birthday</h3>
+                <input name="year" value="{{ person.birth_year }}" placeholder="Birth Year" type="number" min="1" autocomplete="off">
+                <input name="month" value="{{ person.birth_month }}" placeholder="Month" type="number" min="1" max="12" autocomplete="off">
+                <input name="day" value="{{ person.birth_day }}" placeholder="Day" type="number" min="1" max="31" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <p class="input_hints">What are their hobbies?</p>
+            <input class="form-control" name="hobbies" value="{{ person.hobbies }}" placeholder="Hobbies" type="text" autocomplete="off"/>
+        </div>
+        <div class="form-group">
+            <p class="input_hints">What kind of ppl are they?</p>
+            <input class="form-control" name="personalities" value="{{ person.personalities }}" placeholder="Personality/References" type="text" autocomplete="off"/>
+        </div>
+        <div class="form-group">
+            <p class="input_hints">Gift ideas</p>
+            <input class="form-control" name="gifts" value="{{ person.gifts }}" placeholder="Gifts" type="text" autocomplete="off"/>
+        </div>
+
+        <div class="form-group">
+            <p class="input_hints">Pictures!</p>
+            
+            <label for="file-upload" class="custom-file-upload">
+                Upload New Photos
+            </label>
+            <input id="file-upload" type="file" name="images" accept="image/*" multiple style="display: none;" onchange="updateFileName(this)"/>
+            
+            <span id="file-name-display" class="file-name-text"></span>
+        </div>
+
+        <button class="btn btn-primary" type="submit">
+            Save Changes
+        </button>
+    </form>
+
+    
+
+    <a href="/ppl/{{ person.id }}">Cancel</a>
+
+    <script>
+    function updateFileName(input) {
+        const display = document.getElementById('file-name-display');
+        if (input.files && input.files.length === 1) {
+            display.textContent = input.files[0].name;
+        } else if (input.files && input.files.length > 1) {
+            display.textContent = input.files.length + " files selected";
+        } else {
+            display.textContent = "";
+        }
+    }
+
+  
+    </script>
+    
+    <script>
+        
+        let mediaRecorder;
+        let audioChunks = [];
+        const player = document.getElementById("preview-player");
+        if (!player.src) {
+            player.style.display = "none";
+        }
+        document.getElementById("record-btn").addEventListener("click", async function() {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = function(event) {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = function() {
+                const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                const player = document.getElementById("preview-player");
+                player.src = audioUrl;
+                player.style.display = "block";
+
+                const audioFile = new File([audioBlob], "recording_" + Date.now() + ".webm", { type: "audio/webm" });                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(audioFile);
+                document.getElementById("audio-input").files = dataTransfer.files;
+            };
+
+            mediaRecorder.start();
+            document.getElementById("record-btn").disabled = true;
+            document.getElementById("stop-btn").disabled = false;
+            document.getElementById("recording-dot").style.display = "inline-block";
+
+        });
+
+        document.getElementById("stop-btn").addEventListener("click", function() {
+            mediaRecorder.stop();
+            document.getElementById("record-btn").disabled = false;
+            document.getElementById("stop-btn").disabled = true;
+            document.getElementById("recording-dot").style.display = "none";
+
+        });
+    </script>
+{% endblock %}
