@@ -89,63 +89,96 @@
     <a href="/ppl/{{ person.id }}">Cancel</a>
 
     <script>
-    function updateFileName(input) {
-        const display = document.getElementById('file-name-display');
-        if (input.files && input.files.length === 1) {
-            display.textContent = input.files[0].name;
-        } else if (input.files && input.files.length > 1) {
-            display.textContent = input.files.length + " files selected";
-        } else {
-            display.textContent = "";
+        // File name preview for image uploads
+        function updateFileName(input) {
+            const display = document.getElementById('file-name-display');
+            if (input.files && input.files.length === 1) {
+                display.textContent = input.files[0].name;
+            } else if (input.files && input.files.length > 1) {
+                display.textContent = input.files.length + " files selected";
+            } else {
+                display.textContent = "";
+            }
         }
-    }
 
-  
-    </script>
-    
-    <script>
-        
-        let mediaRecorder;
+        // Audio Recording Logic
+        let mediaRecorder = null;
         let audioChunks = [];
-        const player = document.getElementById("preview-player");
-        if (!player.src) {
-            player.style.display = "none";
-        }
+        let audioStream = null;
+        let selectedMimeType = '';
+
+        document.getElementById("preview-player").style.display = "none";
+
         document.getElementById("record-btn").addEventListener("click", async function() {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
+            try {
+                // 1. Request microphone access
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-            mediaRecorder.ondataavailable = function(event) {
-                audioChunks.push(event.data);
-            };
+                // 2. Detect supported audio container for desktop/mobile
+                if (MediaRecorder.isTypeSupported('audio/webm')) {
+                    selectedMimeType = 'audio/webm';
+                } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+                    selectedMimeType = 'audio/mp4';
+                } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+                    selectedMimeType = 'audio/aac';
+                } else {
+                    selectedMimeType = ''; // Let the browser choose its default
+                }
 
-            mediaRecorder.onstop = function() {
-                const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-                const audioUrl = URL.createObjectURL(audioBlob);
+                const options = selectedMimeType ? { mimeType: selectedMimeType } : {};
+                mediaRecorder = new MediaRecorder(audioStream, options);
+                audioChunks = [];
 
-                const player = document.getElementById("preview-player");
-                player.src = audioUrl;
-                player.style.display = "block";
+                mediaRecorder.ondataavailable = function(event) {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
 
-                const audioFile = new File([audioBlob], "recording_" + Date.now() + ".webm", { type: "audio/webm" });                const dataTransfer = new DataTransfer();
-                dataTransfer.items.add(audioFile);
-                document.getElementById("audio-input").files = dataTransfer.files;
-            };
+                mediaRecorder.onstop = function() {
+                    // Determine mime type and file extension based on what was recorded
+                    const actualType = mediaRecorder.mimeType || selectedMimeType || 'audio/webm';
+                    const extension = actualType.includes('mp4') ? 'mp4' : (actualType.includes('aac') ? 'aac' : 'webm');
 
-            mediaRecorder.start();
-            document.getElementById("record-btn").disabled = true;
-            document.getElementById("stop-btn").disabled = false;
-            document.getElementById("recording-dot").style.display = "inline-block";
+                    const audioBlob = new Blob(audioChunks, { type: actualType });
+                    const audioUrl = URL.createObjectURL(audioBlob);
 
+                    // Update UI preview
+                    const player = document.getElementById("preview-player");
+                    player.src = audioUrl;
+                    player.style.display = "block";
+
+                    // Attach file to form input
+                    const audioFile = new File([audioBlob], `recording_${Date.now()}.${extension}`, { type: actualType });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(audioFile);
+                    document.getElementById("audio-input").files = dataTransfer.files;
+
+                    // Stop mic track to release browser indicator
+                    if (audioStream) {
+                        audioStream.getTracks().forEach(track => track.stop());
+                    }
+                };
+
+                // Start recording
+                mediaRecorder.start();
+                document.getElementById("record-btn").disabled = true;
+                document.getElementById("stop-btn").disabled = false;
+                document.getElementById("recording-dot").style.display = "inline-block";
+
+            } catch (err) {
+                alert("Microphone access was denied or isn't supported on this browser. Please check your phone settings!");
+                console.error("Mic error:", err);
+            }
         });
 
         document.getElementById("stop-btn").addEventListener("click", function() {
-            mediaRecorder.stop();
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+            }
             document.getElementById("record-btn").disabled = false;
             document.getElementById("stop-btn").disabled = true;
             document.getElementById("recording-dot").style.display = "none";
-
         });
     </script>
 {% endblock %}
