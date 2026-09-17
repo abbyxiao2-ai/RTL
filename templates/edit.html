@@ -35,6 +35,11 @@
         <input type="file" name="audio" id="audio-input" accept="audio/*" style="display: none;">
     </div>
 
+    <div class="form-group">
+        <p class="input_hints">How to pronounce (text)?</p>
+        <input class="form-control" name="pronunciation" value="{{ person.pronunciation }}" placeholder="Pronunciation" type="text" autocomplete="off"/>
+    </div>
+
         <div class="form-group">
             <p class="input_hints">Phonenumber</p>
             <input class="form-control" name="phonenumber" value="{{ person.phonenumber }}" placeholder="Phonenumber" type="text" autocomplete="off"/>
@@ -107,7 +112,10 @@
         let audioStream = null;
         let selectedMimeType = '';
 
-        document.getElementById("preview-player").style.display = "none";
+        const player = document.getElementById("preview-player");
+        if(!player.src){
+            player.style.display = "none";
+        }
 
         document.getElementById("record-btn").addEventListener("click", async function() {
             try {
